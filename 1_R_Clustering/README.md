@@ -15,7 +15,7 @@ The initial phase established a foundational understanding of the K-Means algori
 * **Deterministic Multicollinearity:** The inclusion of "Pack Years" (PY) and "Age Started" (AgeSt) introduced redundant mathematical derivatives of existing variables, artificially skewing the distance metrics.
 * **Hardcoded Logic:** Cluster assignments were manually hardcoded, rendering the model unscalable and unsuitable for production environments.
 
-![Baseline Elbow Plot](images/01_baseline_elbow.png)
+![Baseline Elbow Plot](../images/01_baseline_elbow.png)
 *Figure 1: Baseline Elbow Plot showing the reduction in WSS as the number of clusters increases. Used to identify the initial point of diminishing returns.*
 
 ---
@@ -27,10 +27,10 @@ To address the baseline flaws, the model was upgraded using the `tidyverse` and 
 * **Action Taken:** Deterministic variables (PY, AgeSt) were removed. Z-score standardization ($z = \frac{x - \mu}{\sigma}$) was applied to ensure equitable weighting of all features. The subjective Elbow method was replaced with the mathematical Silhouette Coefficient to validate cluster separation.
 * **Result:** While the code became scalable, the average Silhouette widths remained low (< 0.25), indicating weak cluster homogeneity and overlapping risk profiles.
 
-![Silhouette Optimization V1](images/02_silhouette_optimization_v1.png)
+![Silhouette Optimization V1](../images/02_silhouette_optimization_v1.png)
 *Figure 2: Initial Silhouette optimization plot. The low average widths indicated that the feature space contained too much noise for distinct separation.*
 
-![Silhouette Validation V1](images/03_silhouette_validation_v1.png)
+![Silhouette Validation V1](../images/03_silhouette_validation_v1.png)
 *Figure 3: Initial Silhouette validation plot showing the distribution of individual observation scores. Note the negative blue bar representing the outlier.*
 
 ### Iteration 2: Feature Selection and Noise Reduction
@@ -38,14 +38,14 @@ Recognizing that irrelevant variables introduce noise, the feature set was reduc
 * **Action Taken:** Height, Tar, Nicotine, and AgeSt were dropped. 
 * **Result:** The Silhouette scores improved, but the resulting clusters were highly imbalanced. Cluster 3 contained only a single observation (a 21-year-old weighing 80kg), indicating that the algorithm was isolating an extreme outlier rather than forming a viable risk pool.
 
-![Silhouette Validation V2](images/04_silhouette_validation_v2.png)
+![Silhouette Validation V2](../images/04_silhouette_validation_v2.png)
 *Figure 4: Silhouette validation after feature selection. Improved homogeneity but still contains the problematic outlier.*
 
 ### Iteration 3: Outlier Removal and Testing Two-Tier Structure
 * **Action Taken:** The extreme outlier (row 5: 21-year-old weighing 80kg) was removed, and the model was re-run with $k=3$, then adjusted to $k=2$ to test a Standard vs. Substandard split.
 * **The Limitation Finding:** Despite achieving a 2-tier split, the Silhouette scores remained suboptimal. It was concluded that the model had hit a mathematical wall: **The Curse of Dimensionality**. In multivariate statistics, stable clustering requires 10 to 20 observations per variable. With only 10 remaining data points and 3 variables, the Euclidean distance metric breaks down. Iteration on this dataset could no longer yield statistically defensible results.
 
-![Silhouette Validation V3](images/05_silhouette_validation_v3.png)
+![Silhouette Validation V3](../images/05_silhouette_validation_v3.png)
 *Figure 5: Testing a two-tier risk structure (k=2) on the cleaned small dataset. While improved, the sample size remains insufficient for production use.*
 
 ---
@@ -56,17 +56,17 @@ To overcome the sample size limitation, the analysis was scaled up by ingesting 
 ### Exploratory Data Analysis (EDA)
 Before modeling, the data distributions were analyzed. 
 
-![EDA Histograms All](images/06_eda_histograms_all.png)
+![EDA Histograms All](../images/06_eda_histograms_all.png)
 *Figure 6: Pre-filtering EDA. Note the flat line for Cigarettes Per Day (CPD); the Y-axis is scaled to accommodate the massive non-smoker population (up to 900 frequency), hiding the true distribution of smokers.*
 
-![EDA Histograms Current](images/07_eda_histograms_current.png)
+![EDA Histograms Current](../images/07_eda_histograms_current.png)
 *Figure 7: Post-filtering EDA (Current Smokers Only). Filtering out non-smokers reveals the true, normalized distributions of the target population with frequency scaled appropriately (0-40).*
 
 ### What Was Done Differently:
 1. **Actuarial Feature Proxy:** Raw "Weight" was replaced with **BMI (Body Mass Index)**. BMI is the actuarial industry standard for morbidity risk as it normalizes weight by height.
 2. **The Principle of Parsimony (Occam's Razor):** The Silhouette optimization plot indicated that $k=5$ yielded the highest mathematical score (0.28). However, $k=2$ provided a highly comparable score (0.25). A 5-tier rating structure introduces unnecessary complexity for underwriters. Therefore, $k=2$ was selected to build a simple, highly defensible two-tier model.
 
-![Silhouette Optimization V4](images/08_silhouette_optimization_v4.png)
+![Silhouette Optimization V4](../images/08_silhouette_optimization_v4.png)
 *Figure 8: Production Silhouette optimization. While k=5 is mathematically highest (0.28), k=2 (0.25) is selected based on the principle of parsimony and business simplicity.*
 
 ### Impact on the Results:
@@ -74,10 +74,10 @@ The transition to real-world data transformed the model from a theoretical exerc
 * **Tier 1 (Standard Risk):** Characterized by older policyholders (Avg Age 59) with lower smoking volume (Avg CPD 11) and healthy BMI (27.7).
 * **Tier 2 (Substandard Risk):** Characterized by younger policyholders (Avg Age 50.6) with double the smoking volume (Avg CPD 22.9) and clinically obese BMI (31.2), indicating severe compounding morbidity and mortality risks.
 
-![Silhouette Validation V4](images/09_silhouette_validation_v4.png)
+![Silhouette Validation V4](../images/09_silhouette_validation_v4.png)
 *Figure 9: Final 2-Tier Cluster Homogeneity. The absence of negative bars proves zero mathematical misclassifications. The smooth tapering reflects the natural, realistic overlap in human health risk.*
 
-![Final Scatter Plot](images/10_final_scatter_plot.png)
+![Final Scatter Plot](../images/10_final_scatter_plot.png)
 *Figure 10: Final Actuarial Risk Segmentation. Policyholders plotted by Age and CPD. The black 'X' marks represent the mathematical centroids. This visual proves the successful boundary drawn between Standard (lower CPD, red) and Substandard (higher CPD, teal) populations.*
 
 ---
